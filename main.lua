@@ -7,7 +7,6 @@ function love.run()
 	
 	Physics = require('libraries/physics')
 	Vec2    = require('libraries/vec2')
-	sti     = require('libraries/sti')
 
 	require('class')
 	require('utils')
