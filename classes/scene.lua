@@ -19,6 +19,7 @@ function Scene:update(dt)
 		it:update(dt) 
 	end
 
+
 	-- delete dead entities
 	rfor @._ents do 
 		if it.dead then
