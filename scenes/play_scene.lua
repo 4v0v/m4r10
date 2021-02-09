@@ -4,11 +4,9 @@ function Play_scene:new()
 	Play_scene.super.new(@)
 
 	@.gravity = 9.8
-
-	@:init()
 end
 
-function Play_scene:init()
+function Play_scene:enter()
 	for @:get_all_entities() do
 		it:kill()
 	end
@@ -25,10 +23,9 @@ function Play_scene:init()
 	@.ground = { 
 		x = 50, 
 		y = 450, 
-		w = 700, 
+		w = 8000, 
 		h = 50
 	}
-
 
 	@.goal = {
 		x = 550, 
@@ -40,6 +37,7 @@ function Play_scene:init()
 	@.can_jump = false
 
 	@.camera:set_position(400, 300)
+
 end
 
 
@@ -52,7 +50,7 @@ function Play_scene:update(dt)
 	if restart_btn then
 		if point_rect_collision({lm:getX(), lm:getY()}, restart_btn:aabb()) then
 			@:once(fn() restart_btn.scale_spring:change(1.5) end, 'is_inside_play')
-			if pressed('m_1') then @:init() end
+			if pressed('m_1') then @:enter() end
 		else 
 			if @.trigger:remove('is_inside_play') then restart_btn.scale_spring:change(1) end
 		end
@@ -75,7 +73,7 @@ function Play_scene:update(dt)
 		end
 		
 		@.player.vel.y += @.gravity * 2
-		@.player.pos += @.player.vel * dt 
+		@.player.pos += @.player.vel * dt
 	end
 
 	if rect_rect_collision(@.ground, {@.player.pos.x, @.player.pos.y, @.player.w, @.player.h}) then 
@@ -93,6 +91,8 @@ function Play_scene:update(dt)
 			})
 		) end, 'add_restart_button')
 	end
+
+	@:follow(@.player.pos.x, @.player.pos.y)
 end
 
 function Play_scene:draw_inside_camera_fg()
