@@ -9,7 +9,7 @@ end
 
 function Lerp:update(dt)
 	if @.current == @.target then return end
-	@.current += (@.target - @.current) * @.speed * dt
+	@.current += ((@.target - @.current) * @.speed * dt)
 
 	if @.target - Lerp.delta < @.current && @.target + Lerp.delta > @.current then 
 		@.current = @.target

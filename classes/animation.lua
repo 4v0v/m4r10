@@ -33,7 +33,7 @@ function Animation:update(dt)
 
       elif @.mode == 'bounce' then
         @.dir = -@.dir
-        @.current_frame += 2 * @.dir
+        @.current_frame += (2 * @.dir)
 			end
 		end
 		if action then action() end

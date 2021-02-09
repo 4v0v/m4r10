@@ -69,6 +69,12 @@ function Camera:follow(x, y)
 	@.target_y = y or @.target_y
 end
 
+
+function Camera:move(x, y)
+	@.target_x += (x or 0)
+	@.target_y += (y or 0)
+end
+
 function Camera:zoom(s) 
 	@.target_s = s 
 end

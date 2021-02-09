@@ -78,21 +78,21 @@ end
 function World:draw()
 	local _r, _g, _b, _a = lg.getColor()
 	-- Colliders --
-	for k1,v1 in pairs(self:getBodies()) do 
-		for k2, v2 in pairs(v1:getFixtures()) do
-			local _shape = v2:getUserData()
+	for k1, body in pairs(self:getBodies()) do 
+		for k2, fixture in pairs(body:getFixtures()) do
+			local _shape = fixture:getUserData()
 			lg.setColor(_shape._color.r, _shape._color.g, _shape._color.b, _shape._color.a)
-			if     v2:getShape():getType() == "circle"  then 
-				local _x, _y = v2:getShape():getPoint()
+			if     fixture:getShape():getType() == "circle"  then 
+				local _x, _y = fixture:getShape():getPoint()
 				lg.push()
-				lg.translate(v1:getX(), v1:getY())
-				lg.rotate(v1:getAngle())
-				lg.circle(_shape._mode, _x, _y, v2:getShape():getRadius())
+				lg.translate(body:getX(), body:getY())
+				lg.rotate(body:getAngle())
+				lg.circle(_shape._mode, _x, _y, fixture:getShape():getRadius())
 				lg.pop()
-			elseif v2:getShape():getType() == "polygon" then 
-				lg.polygon(_shape._mode, v1:getWorldPoints(v2:getShape():getPoints()))
+			elseif fixture:getShape():getType() == "polygon" then 
+				lg.polygon(_shape._mode, body:getWorldPoints(fixture:getShape():getPoints()))
 			else   
-				local _p = {v1:getWorldPoints(v2:getShape():getPoints())} 
+				local _p = {body:getWorldPoints(fixture:getShape():getPoints())} 
 				for i=1, #_p, 2 do 
 					if i < #_p-2 then lg.line(_p[i], _p[i+1], _p[i+2], _p[i+3]) end 
 				end 

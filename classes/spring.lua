@@ -11,8 +11,8 @@ end
 function Spring:update(dt)
 	local diff = @.current - @.target
 	local a    = -@.stiffness * diff - @.dampening * @.v
-	@.v       += a   * dt
-	@.current += @.v * dt
+	@.v       += (a   * dt)
+	@.current += (@.v * dt)
 end
 
 function Spring:pull(amount)
