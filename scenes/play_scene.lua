@@ -37,7 +37,6 @@ function Play_scene:enter()
 	@.can_jump = false
 
 	@.camera:set_position(400, 300)
-
 end
 
 
@@ -73,6 +72,7 @@ function Play_scene:update(dt)
 		end
 		
 		@.player.vel.y += @.gravity * 2
+
 		@.player.pos += @.player.vel * dt
 	end
 

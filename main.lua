@@ -6,7 +6,7 @@ function love.run()
 	lk.setKeyRepeat(true)
 	
 	Physics = require('libraries/physics')
-	Vec2    = require('libraries/vec2')
+	-- Vec2    = require('libraries/vec2')
 
 	require('class')
 	require('utils')
