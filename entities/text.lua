@@ -33,17 +33,17 @@ end
 function Text:aabb()
 	if @.centered then
 		return {
-			x = @.pos.x - @.text:getWidth() / 2, 
-			y = @.pos.y - @.text:getHeight() / 2, 
-			w = @.text:getWidth(), 
-			h = @.text:getHeight()
+			@.pos.x - @.text:getWidth() / 2, 
+			@.pos.y - @.text:getHeight() / 2, 
+			@.text:getWidth(), 
+			@.text:getHeight(),
 		}
 	else 
 		return { 
-			x = @.pos.x, 
-			y = @.pos.y, 
-			w = @.text:getWidth(), 
-			h = @.text:getHeight()
+			@.pos.x, 
+			@.pos.y, 
+			@.text:getWidth(), 
+			@.text:getHeight(),
 		} 
 	end
 end

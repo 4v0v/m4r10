@@ -65,12 +65,17 @@ function Camera:draw(func)
 end
 
 function Camera:follow(x, y)
+	if Vec2:is_vec2(x) then 
+		x, y = x.x, x.y
+	end
 	@.target_x = x or @.target_x
 	@.target_y = y or @.target_y
 end
 
-
 function Camera:move(x, y)
+	if Vec2:is_vec2(x) then 
+		x, y = x.x, x.y
+	end
 	@.target_x += (x or 0)
 	@.target_y += (y or 0)
 end

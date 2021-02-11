@@ -7,17 +7,16 @@ function Play_scene:new()
 end
 
 function Play_scene:enter()
-	for @:get_all_entities() do
-		it:kill()
-	end
+	@:kill_all_entities()
 
 	@.trigger:destroy()
 
-	@.player = { 
+	@.player = {
 		w   = 50,
 		h   = 50,
 		pos = Vec2(400, 0),
 		vel = Vec2(0, 0),
+		can_jump = false
 	}
 
 	@.ground = { 
@@ -34,11 +33,8 @@ function Play_scene:enter()
 		h = 50
 	}
 
-	@.can_jump = false
-
-	@.camera:set_position(400, 300)
+	@:add('cam_rect', Rectangle(300, 300, 300, 600, {centered = true, visible = false} ))
 end
-
 
 function Play_scene:update(dt)
 	Play_scene.super.update(@, dt)
@@ -66,9 +62,9 @@ function Play_scene:update(dt)
 			@.player.vel.x = 0
 		end
 
-		if pressed('space') && @.can_jump then 
+		if pressed('space') && @.player.can_jump then 
 			@.player.vel.y = -800
-			@.can_jump = false
+			@.player.can_jump = false
 		end
 		
 		@.player.vel.y += @.gravity * 2
@@ -79,7 +75,7 @@ function Play_scene:update(dt)
 	if rect_rect_collision(@.ground, {@.player.pos.x, @.player.pos.y, @.player.w, @.player.h}) then 
 		@.player.pos.y = @.ground.y - @.player.w
 		@.player.vel.y = 0
-		@.can_jump = true
+		@.player.can_jump = true
 	end
 
 	if rect_rect_collision(@.goal, {@.player.pos.x, @.player.pos.y, @.player.w, @.player.h}) then 
@@ -92,7 +88,20 @@ function Play_scene:update(dt)
 		) end, 'add_restart_button')
 	end
 
-	@:follow(@.player.pos.x, @.player.pos.y)
+
+	local cam_rect = @:get('cam_rect')
+
+	if cam_rect then
+		if @.player.pos.x < cam_rect:left() then
+			cam_rect:set_left(@.player.pos.x)
+		end
+		if @.player.pos.x > cam_rect:right() then
+			cam_rect:set_right(@.player.pos.x)
+			
+		end
+
+		@:follow(cam_rect.pos)
+	end
 end
 
 function Play_scene:draw_inside_camera_fg()

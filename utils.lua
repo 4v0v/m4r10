@@ -36,7 +36,11 @@ function get(object, path, default)
 		end
 	end
 
-	return value or default
+	if type(value) ~= 'nil' then 
+		return value
+	else
+		return default
+	end
 end
 
 function map(t, func)

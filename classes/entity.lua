@@ -5,12 +5,12 @@ function Entity:new(opts)
 	@.dead    = false
 	@.scene   = {}
 	@.id      = ''
-	@.types   = get(opts, 'types', {})
-
 	@.pos     = Vec2(get(opts, 'x', 0), get(opts, 'y', 0))
 	@.dir     = Vec2(0, 1)
+	@.types   = get(opts, 'types', {})
 	@.z       = get(opts, 'z', 0)
 	@.state   = get(opts, 'state', 'default')
+	@.visible = get(opts, 'visible', true)
 	@.outside_camera = get(opts, 'outside_camera', false)
 end
 
@@ -37,6 +37,10 @@ end
 
 function Entity:set_state(state)
 	@.state = state
+end
+
+function Entity:set_visible(bool)
+	@.visible = bool 
 end
 
 function Entity:is_state(...)
