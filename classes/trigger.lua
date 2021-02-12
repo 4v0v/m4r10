@@ -1,36 +1,23 @@
-
-local _t = {
-	out     = fn(f) return fn(x, ...) return 1 - f(1-x, ...) end end,
-	chain   = fn(f1, f2) return fn(x, ...) return (x < 0.5 and f1(2*x, ...) or 1 + f2(2*x-1, ...))*0.5 end end,
-	linear  = fn(x) return x end,
-	quad    = fn(x) return x*x end,
-	cubic   = fn(x) return x*x*x end,
-	quart   = fn(x) return x*x*x*x end,
-	quint   = fn(x) return x*x*x*x*x end,
-	sine    = fn(x) return 1-math.cos(x*math.pi/2) end,
-	expo    = fn(x) return 2^(10*(x-1)) end,
-	circ    = fn(x) return 1-math.sqrt(1-x*x) end,
-	back    = fn(x, b) b = b or 1.70158; return x*x*((b+1)*x - b) end, --bounciness
-	bounce  = fn(x) local a, b = 7.5625, 1/2.75; return math.min(a*x^2, a*(x-1.5*b)^2 + 0.75, a*(x-2.25*b)^2 + 0.9375, a*(x-2.625*b)^2 + 0.984375) end,
-	elastic = fn(x, a, p) a, p = a and math.max(1, a) or 1, p or 0.3; return (-a*math.sin(2*math.pi/p*(x-1) - math.asin(1/a)))*2^(10*(x-1)) end -- amp, period
-}
-
 local function _random_time(time) 
 	if type(time) == 'table' then return time[1] + love.math.random() * (time[2] - time[1]) 
 	else return time end 
 end
 
 local function _tween(f, ...)
-	if   f:find('linear')    then return _t.linear(...)
-	elif f:find('in%-out%-') then return _t.chain(_t[f:sub(8, -1)], _t.out(_t[f:sub(8, -1)]))(...) 
-	elif f:find('in%-')      then return _t[f:sub(4, -1)](...)
-	elif f:find('out%-')     then return _t.out(_t[f:sub(5, -1)])(...) end
+	if   f:find('linear')    then return Trigger.linear(...)
+	elif f:find('in%-out%-') then return Trigger.chain(Trigger[f:sub(8, -1)], Trigger.out(Trigger[f:sub(8, -1)]))(...) 
+	elif f:find('in%-')      then return Trigger[f:sub(4, -1)](...)
+	elif f:find('out%-')     then return Trigger.out(Trigger[f:sub(5, -1)])(...) end
 end
 
 local function _calc_tween(subject, target, out)
 	for k, v in pairs(target) do
-		if type(v) == 'table' then _calc_tween(subject[k], v, out)
-		else local ok, delta = pcall(function() return (v - subject[k])*1 end); out[#out+1] = {subject, k, delta} end
+		if type(v) == 'table' then 
+			_calc_tween(subject[k], v, out)
+		else 
+			local ok, delta = pcall(function() return (v - subject[k])*1 end)
+			out[#out+1] = {subject, k, delta} 
+		end
 	end
 	return out
 end
@@ -269,6 +256,61 @@ function Trigger:remove(tag)
 	return result
 end
 
-function Trigger:destroy() 
+function Trigger:remove_all_triggers() 
 	@.triggers = {} 
 end
+
+function Trigger.out(f) 
+	return fn(x, ...) return 1 - f(1-x, ...) end 
+end
+
+function Trigger.chain(f1, f2) 
+	return fn(x, ...) return (x < 0.5 and f1(2*x, ...) or 1 + f2(2*x-1, ...))*0.5 end 
+end
+
+function Trigger.linear(x) 
+	return x 
+end
+
+function Trigger.quad(x) 
+	return x*x 
+end
+
+function Trigger.cubic(x) 
+	return x*x*x 
+end
+
+function Trigger.quart(x) 
+	return x*x*x*x 
+end
+
+function Trigger.quint(x) 
+	return x*x*x*x*x 
+end
+
+function Trigger.sine(x) 
+	return 1-math.cos(x*math.pi/2) 
+end
+
+function Trigger.expo(x) 
+	return 2^(10*(x-1)) 
+end
+
+function Trigger.circ(x) 
+	return 1-math.sqrt(1-x*x) 
+end
+
+function Trigger.back(x, b) --bounciness
+	b = b or 1.70158
+	return x*x*((b+1)*x - b) 
+end 
+
+function Trigger.bounce(x) 
+	local a, b = 7.5625, 1/2.75
+	return math.min(a*x^2, a*(x-1.5*b)^2 + 0.75, a*(x-2.25*b)^2 + 0.9375, a*(x-2.625*b)^2 + 0.984375) 
+end
+
+function Trigger.elastic(x, a, p) -- amp, period
+	a, p = a and math.max(1, a) or 1, p or 0.3
+	return (-a*math.sin(2*math.pi/p*(x-1) - math.asin(1/a)))*2^(10*(x-1)) 
+end 

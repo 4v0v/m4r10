@@ -1,15 +1,15 @@
 Animation =  Class:extend('Animation')
 
 function Animation:new(delay, frames, mode, actions)
-  @.delay   = delay
-  @.anim_frames  = frames
-  @.size    = #frames.frames
-  @.mode    = mode or 'loop'
-  @.actions = actions
+  	@.delay   = delay
+  	@.anim_frames  = frames
+  	@.size    = #frames.frames
+  	@.mode    = mode or 'loop'
+  	@.actions = actions
 	@.pause   = false
-  @.timer   = 0
-  @.current_frame = 1
-  @.dir     = 1
+  	@.timer   = 0
+  	@.current_frame = 1
+  	@.dir     = 1
 end
 
 function Animation:update(dt)

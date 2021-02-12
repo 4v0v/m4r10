@@ -94,6 +94,14 @@ function Entity:always(...)
 	@.trigger:always(...)
 end
 
+function Entity:remove_all_triggers()
+	@.trigger:remove_all_triggers()
+end
+
+function Entity:remove_trigger(...)
+	@.trigger:remove(...)
+end
+
 function Entity:lerp_to(target, speed)
 	self.pos = self.pos:lerp(Vec2(target), speed)
 end

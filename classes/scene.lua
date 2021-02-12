@@ -23,8 +23,8 @@ function Scene:update(dt)
 	rfor @.ents do 
 		if it.dead then
 			for type in it.types do @.ents_by_type[type][it.id] = nil end
-			it.scene = nil
-			it.trigger:destroy()
+			it:remove_all_triggers()
+			it.scene            = nil
 			@.ents_by_id[it.id] = nil
 			table.remove(@.ents, key)
 		end
@@ -90,20 +90,16 @@ function Scene:add(a, b, c)
 		id, types, entity = uid(), {}, a
 	end
 
+	if @:get(id) then return false end
+
 	insert(types, entity:class())
 	for entity.types do insert(types, it) end
 
 	entity.types = types  
 	entity.id    = id
-
-	-- add id on the same frame the entity with same id is killed
-	if @.ents_by_id[id] && !@.ents_by_id[id].dead then  
-		print('id already exist') 
-	else
-		entity.scene = @
-		@.queue[id] = entity
-	end 
-
+	entity.scene = @
+	@.queue[id]  = entity
+	
 	return entity
 end
 
@@ -118,7 +114,7 @@ function Scene:kill_all_entities()
 	end
 end
 
-function Scene:get(id) 
+function Scene:get(id)
 	local entity = @.ents_by_id[id]
 	if !entity or entity.dead then return false end
 	return entity
@@ -214,6 +210,14 @@ end
 
 function Scene:always(...)
 	@.trigger:always(...)
+end
+
+function Scene:remove_all_triggers()
+	@.trigger:remove_all_triggers()
+end
+
+function Scene:remove_trigger(...)
+	@.trigger:remove(...)
 end
 
 function Scene:zoom(...)

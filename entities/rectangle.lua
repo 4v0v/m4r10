@@ -103,17 +103,21 @@ function Rectangle:set_bottom(y)
 end
 
 function Rectangle:collide_with_point(p)
-	return rect_point_collision({@.pos.x, @.pos.y, @.w, @.h}, p)
+	return rect_point_collision(@:aabb(), p)
 end
 
 function Rectangle:collide_with_circ(c)
-	return rect_circ_collision({@.pos.x, @.pos.y, @.w, @.h}, c)
+	return rect_circ_collision(@:aabb(), c)
 end
 
 function Rectangle:collide_with_rect(r)
-	return rect_rect_collision({@.pos.x, @.pos.y, @.w, @.h}, r)
+	return rect_rect_collision(@:aabb(), r)
 end
 
 function Rectangle:aabb()
-	return {@.pos.x, @.pos.y, @.w, @.h}
+	if @.centered then
+		return {@.pos.x - @.w/2, @.pos.y - @.h/2, @.w, @.h}
+	else
+		return {@.pos.x, @.pos.y, @.w, @.h}
+	end
 end

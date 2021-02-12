@@ -64,6 +64,10 @@ function foreach(iterable, func)
 	end
 end
 
+function sign(x)
+	if x >= 0 then return 1 else return -1 end
+end
+
 function insert(...)
 	return table.insert(...)
 end
