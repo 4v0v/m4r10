@@ -1,26 +1,3 @@
-local function _random_time(time) 
-	if type(time) == 'table' then return time[1] + love.math.random() * (time[2] - time[1]) 
-	else return time end 
-end
-
-local function _tween(f, ...)
-	if   f:find('linear')    then return Trigger.linear(...)
-	elif f:find('in%-out%-') then return Trigger.chain(Trigger[f:sub(8, -1)], Trigger.out(Trigger[f:sub(8, -1)]))(...) 
-	elif f:find('in%-')      then return Trigger[f:sub(4, -1)](...)
-	elif f:find('out%-')     then return Trigger.out(Trigger[f:sub(5, -1)])(...) end
-end
-
-local function _calc_tween(subject, target, out)
-	for k, v in pairs(target) do
-		if type(v) == 'table' then 
-			_calc_tween(subject[k], v, out)
-		else 
-			local ok, delta = pcall(function() return (v - subject[k])*1 end)
-			out[#out+1] = {subject, k, delta} 
-		end
-	end
-	return out
-end
 
 Trigger = Class:extend('Trigger')
 
@@ -30,204 +7,251 @@ end
 
 function Trigger:update(dt)
   for tag, v in pairs(@.triggers) do
-		if not v.active then goto continue end
-		v.t = v.t + dt
-
-		if v.type == 'after' then 
-			if v.t >= v.total then 
-				v.action()
-				@:remove(tag)
-			end
-
-		elseif v.type == 'after_true' then
-			if v.cond() then 
-				v.action()
-				@:remove(tag) 
-			end
-
-		elseif v.type == 'every_true' then
-			if v.cond() and v.can_do_action  then 
-				v.can_do_action = false
-				v.action()
-				v.c = v.c + 1
-				if v.c == v.count then 
+		if v.active then
+			v.elapsed += dt
+	
+			if v.type == 'after' then 
+				if v.elapsed >= v.total then 
+					v.action()
 					v.after()
 					@:remove(tag)
 				end
-			elseif not v.cond() and not v.can_do_action then
-				v.can_do_action = true
-			end
 
-		elseif v.type == 'during_true' then
-			if v.cond() then 
-				if v.can_do_action then v.can_do_action = false end
+			elif v.type == 'during' then
 				v.action()
-			elseif not v.cond() and not v.can_do_action then
-				v.after()
-				@:remove(tag)
-			end
-
-		elseif v.type == 'during' then
-			v.action()
-			if v.t >= v.total then 
-				v.after()
-				@:remove(tag) 
-			end
-
-		elseif v.type == 'every' then  
-			if v.t >= v.total then
-				v.action()
-				v.c = v.c + 1
-				v.t = v.t - v.total
-				v.total = _random_time(v.initial_time)
-				if v.c == v.count then 
+				if v.elapsed >= v.total then 
+					v.after()
+					@:remove(tag) 
+				end
+	
+			elif v.type == 'every' then
+				if v.elapsed >= v.total then
+					v.action()
+					v.elapsed -= v.total
+					v.total    = @:calculate_time(v.initial)
+					v.c       += 1
+					if v.c == v.count then 
+						v.after()
+						@:remove(tag)
+					end
+				end
+	
+			elif v.type == 'after_true' then
+				if v.cond() then 
+					v.action()
+					v.after()
+					@:remove(tag) 
+				end
+	
+			elif v.type == 'during_true' then
+				if v.cond() then 
+					if v.can_do_action then v.can_do_action = false end
+					v.action()
+				elif !v.cond() && !v.can_do_action then
 					v.after()
 					@:remove(tag)
 				end
-			end
-
-		elseif v.type == 'tween' then
-			local s  = _tween(v.method, math.min(1, v.t/v.total))
-			local ds = s - v.last_s
-			v.last_s = s
-			for _, info in ipairs(v.payload) do 
-				local ref, key, delta = unpack(info)
-				ref[key] = ref[key] + delta * ds 
-			end
-			if v.t >= v.total then 
-				for _, info in ipairs(v.payload) do 
-					local ref, key, _ = unpack(info)
-					ref[key] = v.target[key] 
+	
+			elif v.type == 'every_true' then
+				if v.cond() && v.can_do_action  then 
+					v.can_do_action = false
+					v.action()
+					v.c += 1 
+					if v.c == v.count then 
+						v.after()
+						@:remove(tag)
+					end
+				elif !v.cond() && !v.can_do_action then
+					v.can_do_action = true
 				end
-				v.after()
-				@:remove(tag)
+	
+			elif v.type == 'tween' then
+				local progress       = math.min(1, v.elapsed/v.total)
+				local tween_progress = @:calculate_tween_progress(v.method, progress, _) -- TODO: add arguments to tween
+
+				for _, tweened_value in ipairs(v.tweened_values) do 
+					local subject, key, initial, delta = unpack(tweened_value)
+					subject[key] = initial + delta * tween_progress
+				end
+
+				if v.elapsed >= v.total then 
+					v.after()
+					@:remove(tag)
+				end
 			end
 		end
-		
-		::continue::
 	end
 end
 
-function Trigger:after(time, action, tag)
-	local tag = tag or uid()
+function Trigger:after(condition, action, tag, after)
+	local tag = tag || uid()
 	if @.triggers[tag] then return false end
-	@.triggers[tag] = {
-		type   = 'after', 
-		active = true,
-		t      = 0, 
-		total  = _random_time(time), 
-		action = action,
-	}
+
+	if type(condition) == 'function' then
+		@.triggers[tag] = { 
+			tag     = tag,
+			type    = 'after_true',
+			active  = true,
+			elapsed = 0,
+			cond    = condition,
+			action  = action,
+			after   = after || fn() end
+		}
+	else
+		@.triggers[tag] = {
+			tag     = tag,
+			type    = 'after', 
+			active  = true,
+			elapsed = 0, 
+			total   = @:calculate_time(condition), 
+			action  = action,
+			after   = after || fn() end,
+		}
+	end
+
 	return @.triggers[tag]
 end
 
 function Trigger:every_immediate(time, action, count, tag, after)
-	local tag = tag or uid()
+	local tag = tag || uid()
 	if @.triggers[tag] then return false end
-	local total = _random_time(time)
+	local total = @:calculate_time(time)
 	@.triggers[tag] = {
-		type      = 'every', 
-		active    = true,
-		total     = total, 
-		initial_time = time, 
-		t         = total,
-		count     = count or -1, 
-		c         = 0, 
-		action    = action, 
-		after     = after or function() end,
-	}
-	return @.triggers[tag]
-end
-
-function Trigger:every(time, action, count, tag, after)
-	local tag = tag or uid()
-	if @.triggers[tag] then return false end
-	@.triggers[tag] = {
-		type      = 'every', 
-		active    = true,
-		total     = _random_time(time), 
-		initial_time = time, 
-		t         = 0, 
-		count     = count or -1, 
-		c         = 0, 
-		action    = action, 
-		after     = after or function() end,
-	}
-	return @.triggers[tag]
-end
-
-function Trigger:during(time, action, tag, after)
-	local tag = tag or uid()
-  if @.triggers[tag] then return false end
-	@.triggers[tag] = {
-		type    = 'during', 
+		tag     = tag,
+		type    = 'every', 
 		active  = true,
-		t       = 0,
-		total   = _random_time(time), 
+		total   = total, 
+		initial = time,
+		elapsed = total,
+		count   = count || -1, 
+		c       = 0, 
 		action  = action, 
-		after   = after or function() end,
+		after   = after || fn() end,
 	}
+	return @.triggers[tag]
+end
+
+function Trigger:every(condition, action, count, tag, after)
+	local tag = tag || uid()
+	if @.triggers[tag] then return false end
+
+	if type(condition) == 'function' then
+		@.triggers[tag] = { 
+			tag     = tag,
+			type    = 'every_true',
+			elapsed = 0,
+			active  = true,
+			count   = count || -1,
+			c       = 0,
+			cond    = condition,
+			action  = action,
+			can_do_action = true,
+			after   = after || fn() end
+		}
+	else
+		@.triggers[tag] = {
+			tag     = tag,
+			type    = 'every', 
+			active  = true,
+			total   = @:calculate_time(condition), 
+			initial = condition, 
+			elapsed = 0, 
+			count   = count || -1, 
+			c       = 0, 
+			action  = action, 
+			after   = after || fn() end,
+		}
+	end
+
+	return @.triggers[tag]
+end
+
+function Trigger:during(condition, action, tag, after)
+	local tag = tag || uid()
+  	if @.triggers[tag] then return false end
+
+	if type(condition) == 'function' then
+		@.triggers[tag] = {
+			tag     = tag, 
+			type    = 'during_true',
+			elapsed = 0,
+			active  = true,
+			can_do_action = true,
+			cond    = condition,
+			action  = action,
+			after   = after || fn() end,
+		}
+	else
+		@.triggers[tag] = {
+			tag     = tag,
+			type    = 'during', 
+			active  = true,
+			elapsed = 0,
+			total   = @:calculate_time(condition), 
+			action  = action, 
+			after   = after || fn() end,
+		}
+	end
+
 	return @.triggers[tag]
 end
 
 function Trigger:tween(time, subject, target, method, tag, after)
-	local tag = tag or uid()
+	local tag = tag || uid()
 	if @.triggers[tag] then return false end
 	@.triggers[tag] = { 
+		tag     = tag,
 		type    = 'tween', 
 		active  = true,
-		t       = 0,
-		total   = _random_time(time), 
+		elapsed = 0,
+		total   = @:calculate_time(time), 
 		subject = subject, 
 		target  = target, 
 		method  = method, 
-		last_s  = 0, 
-		payload = _calc_tween(subject, target, {}),
-		after   = after or function() end, 
+		tweened_values = @:calculate_tweened_values(subject, target, {}),
+		after   = after || fn() end, 
 	}
 	return @.triggers[tag]
 end
 
-function Trigger:after_true(cond, action, tag)
-	local tag = tag or uid()
+function Trigger:chain(triggers, tag)
+	local tag = tag || uid()
 	if @.triggers[tag] then return false end
-	@.triggers[tag] = { 
-		type   = 'after_true',
-		t      = 0,
-		active = true,
-		cond   = cond,
-		action = action,
-	}
-end
 
-function Trigger:every_true(cond, action, count, tag, after)
-	local tag = tag or uid()
-	if @.triggers[tag] then return false end
-	@.triggers[tag] = { 
-		type   = 'every_true',
-		t      = 0,
-		active = true,
-		count  = count or -1,
-		c      = 0,
-		can_do_action = true,
-		cond   = cond,
-		action = action,
-		after  = after or function() end
+	@.triggers[tag] = {
+		tag     = tag,
+		type    = 'chain',
+		tags    = {},
+		elapsed = 0,
+		current_trigger = 1,
 	}
-end
 
-function Trigger:during_true(cond, action, tag, after)
-	local tag = tag or uid()
-	if @.triggers[tag] then return false end
-	@.triggers[tag] = { 
-		type   = 'during_true',
-		t      = 0,
-		active = true,
-		can_do_action = true,
-		cond   = cond,
-		action = action,
-		after  = after
-	}
+	local chain = @.triggers[tag]
+
+	-- initialize triggers contained in the chain
+	for i = 1, #triggers, 2 do
+		local after_tag = @:after(triggers[i], triggers[i + 1]).tag
+		if i > 1 then @:pause(after_tag) end
+		insert(chain.tags, after_tag)
+	end
+
+	-- enable next trigger when previous is completed
+	ifor chain.tags do
+		local trigger         = @.triggers[it]
+		local trigger_action  = trigger.action
+		
+		trigger.action = fn() 
+			trigger_action()
+			chain.current_trigger += 1
+			if chain.current_trigger > #chain.tags then
+				@:remove(chain.tag)
+			else
+				@:play(chain.tags[chain.current_trigger])
+			end
+		end
+	end
+
+	return @.triggers[tag]
 end
 
 function Trigger:once(action, tag)
@@ -238,34 +262,93 @@ function Trigger:always(action, tag)
 	return @:during(math.huge, action, tag) 
 end
 
-function Trigger:get(tag) 
-	return @.triggers[tag] 
+function Trigger:get(tag)
+	return @.triggers[tag]
 end
 
-function Trigger:pause(tag) 
-	@.triggers[tag].active = false
+function Trigger:pause(tag)
+	local trigger = @:get(tag)
+	if !trigger then return false end
+
+	if trigger.type == 'chain' then
+		@:pause(trigger.tags[trigger.current_trigger])
+	else
+		trigger.active = false
+	end
+
+	return true
 end
 
-function Trigger:play(tag) 
-	@.triggers[tag].active = true 
+function Trigger:play(tag)
+	local trigger = @:get(tag)
+	if !trigger then return false end
+
+	if trigger.type == 'chain' then
+		@:play(trigger.tags[trigger.current_trigger])
+	else
+		trigger.active = true 
+	end
+
+	return true
 end
 
 function Trigger:remove(tag)
-	local result = not not @.triggers[tag]
+	local trigger = @:get(tag)
+	if !trigger then return false end
+
+	if trigger.type == 'chain' then
+		for trigger.tags do @:remove(it) end
+	end
 	@.triggers[tag] = nil
-	return result
+
+	return true
 end
 
 function Trigger:remove_all_triggers() 
 	@.triggers = {} 
 end
 
+function Trigger:calculate_tween_progress(method, progress, ...)
+	if progress >= 1 then 
+		return 1 
+	elif method:find('in%-out%-') then 
+		return Trigger.chain_methods(Trigger[method:sub(8, -1)], Trigger.out(Trigger[method:sub(8, -1)]))(progress, ...) 
+	elif method:find('in%-')      then 
+		return Trigger[method:sub(4, -1)](progress, ...)
+	elif method:find('out%-')     then
+		return Trigger.out(Trigger[method:sub(5, -1)])(progress, ...) 
+	else  
+		return Trigger[method](progress, ...) 
+	end
+end
+
+function Trigger:calculate_time(time) 
+	if type(time) == 'table' then 
+		return time[1] + love.math.random() * (time[2] - time[1]) 
+	else 
+		return time 
+	end 
+end
+
+function Trigger:calculate_tweened_values(subject, targets, tweened_values)
+	for key, target in pairs(targets) do
+		if type(target) == 'table' then 
+			@:calculate_tweened_values(subject[key], target, tweened_values)
+		else 
+			local initial = subject[key]
+			local delta   = target - subject[key]
+			insert(tweened_values, {subject, key, initial, delta})
+		end
+	end
+	return tweened_values
+end
+
 function Trigger.out(f) 
 	return fn(x, ...) return 1 - f(1-x, ...) end 
 end
 
-function Trigger.chain(f1, f2) 
-	return fn(x, ...) return (x < 0.5 and f1(2*x, ...) or 1 + f2(2*x-1, ...))*0.5 end 
+function Trigger.chain_methods(f1, f2) 
+	return fn(x, ...) return (x < 0.5 && f1(2*x, ...) || 1 + f2(2*x-1, ...))*0.5 end 
 end
 
 function Trigger.linear(x) 
@@ -300,17 +383,18 @@ function Trigger.circ(x)
 	return 1-math.sqrt(1-x*x) 
 end
 
-function Trigger.back(x, b) --bounciness
-	b = b or 1.70158
-	return x*x*((b+1)*x - b) 
-end 
-
 function Trigger.bounce(x) 
 	local a, b = 7.5625, 1/2.75
 	return math.min(a*x^2, a*(x-1.5*b)^2 + 0.75, a*(x-2.25*b)^2 + 0.9375, a*(x-2.625*b)^2 + 0.984375) 
 end
 
-function Trigger.elastic(x, a, p) -- amp, period
-	a, p = a and math.max(1, a) or 1, p or 0.3
+function Trigger.back(x, b) --bounciness
+	b = b || 1.70158
+	return x*x*((b+1)*x - b) 
+end 
+
+function Trigger.elastic(x, a, p) -- amplitude, period
+	a = a && math.max(1, a) || 1 
+	p = p || 0.3
 	return (-a*math.sin(2*math.pi/p*(x-1) - math.asin(1/a)))*2^(10*(x-1)) 
 end 

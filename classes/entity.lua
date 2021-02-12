@@ -58,32 +58,20 @@ function Entity:after(...)
 	@.trigger:after(...)
 end
 
-function Entity:tween(...)
-	@.trigger:tween(...)
+function Entity:during(...)
+	@.trigger:during(...)
 end
 
 function Entity:every(...)
 	@.trigger:every(...)
 end
 
-function Entity:after_true(...)
-	@.trigger:after_true(...)
-end
-
-function Entity:every_true(...)
-	@.trigger:every_true(...)
-end
-
-function Entity:during_true(...)
-	@.trigger:during_true(...)
-end
-
 function Entity:every_immediate(...)
 	@.trigger:every_immediate(...)
 end
 
-function Entity:during(...)
-	@.trigger:during(...)
+function Entity:tween(...)
+	@.trigger:tween(...)
 end
 
 function Entity:once(...)
@@ -92,6 +80,9 @@ end
 
 function Entity:always(...)
 	@.trigger:always(...)
+end
+function Entity:chain(...)
+	@.trigger:chain(...)
 end
 
 function Entity:remove_all_triggers()

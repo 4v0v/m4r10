@@ -3,7 +3,7 @@ Play_scene = Scene:extend('Play_scene')
 function Play_scene:new()
 	Play_scene.super.new(@)
 
-	@.gravity = 9.8
+	@.gravity = 10
 end
 
 function Play_scene:enter()
@@ -19,6 +19,36 @@ function Play_scene:enter()
 	@:add('ground', Rectangle(50,  450, 1000, 50, {color = COLORS.YELLOW, mode= 'fill'}))
 	@:add('goal', Rectangle(550,  400, 50, 50, {color = COLORS.RED, mode= 'fill'}))
 	@:add('cam_rect', Rectangle(300, 300, 300, 600, {centered = true, visible = false} ))
+
+
+
+	@:chain({
+		fn() return pressed('space') end, 
+		fn() print('one') end,
+
+		1, 
+		fn() print('two')   end,
+
+		1, 
+		fn() print('three') end,
+
+		3, 
+		fn() @:during(3, fn() print('hello') end, 'during') end,
+
+		fn() return !@.trigger:get('during') end, 
+		fn() @:every(2, fn() print('every') end, 3, 'every') end,
+
+		fn() return !@.trigger:get('every') end, 
+		fn() end,
+
+		1, 
+		fn() print('five') end,
+
+		1, 
+		fn() print('six') end,
+	}, 'test')
+
+
 end
 
 function Play_scene:update(dt)

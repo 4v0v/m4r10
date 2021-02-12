@@ -176,18 +176,6 @@ function Scene:after(...)
 	@.trigger:after(...)
 end
 
-function Scene:after_true(...)
-	@.trigger:after_true(...)
-end
-
-function Scene:every_true(...)
-	@.trigger:every_true(...)
-end
-
-function Scene:during_true(...)
-	@.trigger:during_true(...)
-end
-
 function Scene:tween(...)
 	@.trigger:tween(...)
 end
@@ -206,6 +194,10 @@ end
 
 function Scene:once(...)
 	@.trigger:once(...)
+end
+
+function Scene:chain(...)
+	@.trigger:chain(...)
 end
 
 function Scene:always(...)

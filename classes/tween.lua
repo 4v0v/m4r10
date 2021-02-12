@@ -2,12 +2,12 @@ Tween = Class:extend('Tween')
 
 function Tween:new(value, method, ...)
 	@.current  = value
-	@.target   = value
+	@.initial  = value
+	@.delta    = 0
 	@.method   = method or 'linear'
 	@.args     = {...}
 	@.duration = 0
 	@.elapsed  = 0
-	@.delta    = 0
 end
 
 function Tween:update(dt)
@@ -15,27 +15,27 @@ function Tween:update(dt)
 
 	@.elapsed += dt
 
-	local progress = @.elapsed / @.duration
+	local progress       = math.min(1, @.elapsed / @.duration)
+	local tween_progress = @:tween_progress(@.method, progress, @.args)
+	@.current            = @.initial + @.delta * tween_progress
 
-	if progress > 1 then 
-		@.current = @.target
-		@.elapsed = @.duration
-	else
-		@.current = @.target - (1 - @:construct(@.method, progress, @.args) ) * @.delta
+	if progress == 1 then 
+		@.duration = 0
+		@.elapsed  = 0
 	end
 end
 
 function Tween:tween(target, time, method, ...)
 	local args = {...}
-	if #args == 0 then args = @.args end
-	if time == 0 then @.current = target end
+	if !method && #args == 0 then args = @.args end -- keep tween args if we don't chage the method
+	if time  == 0 then @.current = target end
 	
-	@.elapsed  = 0
-	@.duration = time
-	@.target   = target
+	@.initial  = @.current
 	@.delta    = target - @.current
-	@.method   = method or @.method
+	@.duration = time
+	@.elapsed  = 0
 	@.args     = args
+	@.method   = method or @.method
 end
 
 function Tween:get() 
@@ -44,21 +44,23 @@ end
 
 function Tween:set(value)
 	@.current  = value
-	@.target   = value
+	@.initial  = value
+	@.delta    = 0
 	@.duration = 0
 	@.elapsed  = 0
-	@.delta    = 0
 end
 
-function Tween:construct(name, ...) -- construct tween function
-	if     name:find('in%-out%-') then 
-		return Tween.chain(Tween[name:sub(8, -1)], Tween.out(Tween[name:sub(8, -1)]))(...) 
-	elseif name:find('in%-')      then 
-		return Tween[name:sub(4, -1)](...)
-	elseif name:find('out%-')     then
-		return Tween.out(Tween[name:sub(5, -1)])(...) 
+function Tween:tween_progress(method, progress, ...)
+	if progress >= 1 then 
+		return 1 
+	elif method:find('in%-out%-') then 
+		return Tween.chain(Tween[method:sub(8, -1)], Tween.out(Tween[method:sub(8, -1)]))(progress, ...) 
+	elif method:find('in%-')      then 
+		return Tween[method:sub(4, -1)](progress, ...)
+	elif method:find('out%-')     then
+		return Tween.out(Tween[method:sub(5, -1)])(progress, ...) 
 	else  
-		return Tween[name](...) 
+		return Tween[method](progress, ...) 
 	end
 end
 
