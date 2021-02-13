@@ -147,10 +147,6 @@ function Vec2:unit_y()
 	return Vec2(0, 1) 
 end
 
-function Vec2:zero() 
-	return Vec2(0, 0) 
-end
-
 function Vec2:length_to(b) 
 	local dx = @.x - b.x 
 	local dy = @.y - b.y 
@@ -179,16 +175,8 @@ function Vec2:angle_between(b)
 	return atan2(sin(source-target), cos(source-target)) 
 end
 
-function Vec2:__index(v)
-	return Vec2[v] 
-end
-
 function Vec2:__tostring()
 	return @:to_string()
-end
-
-function Vec2:__call(x, y)
-	return Vec2(x, y) 
 end
 
 function Vec2:__unm() 
