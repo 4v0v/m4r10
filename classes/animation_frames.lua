@@ -9,7 +9,7 @@ function AnimationFrames:new(image, frame_w, frame_h, ox, oy, frames_list)
 		frames_list = @:convert_frames_string(frames_list)
 	end
 
-  @.image    = image
+  	@.image    = image
 	@.frame_w  = frame_w
 	@.frame_h  = frame_h
 	@.ox       = ox or 0

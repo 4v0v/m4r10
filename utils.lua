@@ -1,4 +1,4 @@
-function uid() 
+function uid()
 	return ("xxxxxxxxxxxxxxxx"):gsub("[x]", function() 
 		local r = math.random(16) return ("0123456789ABCDEF"):sub(r, r) 
 	end)
@@ -12,9 +12,9 @@ function cmyk(...)
 	else
 		c, m, y, k, a = args[1], args[2], args[3], args[4], args[5]
 	end
-	local r = 1 -  (c * (1 - k) + k)
-	local g = 1 -  (m * (1 - k) + k)
-	local b = 1 -  (y * (1 - k) + k)
+	local r = 1 - (c * (1 - k) + k)
+	local g = 1 - (m * (1 - k) + k)
+	local b = 1 - (y * (1 - k) + k)
 	return {r, g, b, a}
 end
 
@@ -83,6 +83,10 @@ end
 
 function clamp(low, n, high) 
 	return math.min(math.max(low, n), high) 
+end
+
+function almost_equal(a, b, x)
+	return a + x >= b and a - x <= b
 end
 
 function require_all(path, opts)

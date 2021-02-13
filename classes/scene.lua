@@ -1,11 +1,11 @@
 Scene = Class:extend('Scene')
 
 function Scene:new()
-	@.trigger = Trigger()
-	@.camera  = Camera()
-	@.id      = ''
-	@.queue   = {}
-	@.ents    = {}
+	@.trigger      = Trigger()
+	@.camera       = Camera()
+	@.id           = ''
+	@.queue        = {}
+	@.ents         = {}
 	@.ents_by_id   = {}
 	@.ents_by_type = {}
 end
@@ -173,35 +173,43 @@ function Scene:exit()
 end
 
 function Scene:after(...)
-	@.trigger:after(...)
+	return @.trigger:after(...)
 end
 
 function Scene:tween(...)
-	@.trigger:tween(...)
+	return @.trigger:tween(...)
 end
 
 function Scene:every(...)
-	@.trigger:every(...)
+	return @.trigger:every(...)
 end
 
 function Scene:every_immediate(...)
-	@.trigger:every_immediate(...)
+	return @.trigger:every_immediate(...)
 end
 
 function Scene:during(...)
-	@.trigger:during(...)
+	return @.trigger:during(...)
+end
+
+function Scene:during_true(...)
+	return @.trigger:during_true(...)
 end
 
 function Scene:once(...)
-	@.trigger:once(...)
+	return @.trigger:once(...)
 end
 
 function Scene:chain(...)
-	@.trigger:chain(...)
+	return @.trigger:chain(...)
 end
 
 function Scene:always(...)
-	@.trigger:always(...)
+	return @.trigger:always(...)
+end
+
+function Scene:get_trigger(...)
+	return @.trigger:get(...)
 end
 
 function Scene:remove_all_triggers()
@@ -209,7 +217,7 @@ function Scene:remove_all_triggers()
 end
 
 function Scene:remove_trigger(...)
-	@.trigger:remove(...)
+	return @.trigger:remove(...)
 end
 
 function Scene:zoom(...)

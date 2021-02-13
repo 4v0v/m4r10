@@ -1,7 +1,7 @@
 Grid = Class:extend('Grid')
 
 function Grid:new(w, h, value)
-  @.grid   = {}
+  	@.grid   = {}
 	@.width  = w
 	@.height = h
 	
